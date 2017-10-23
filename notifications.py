@@ -1,13 +1,10 @@
-from contextlib import contextmanager
 from datetime import datetime
-from json import dumps, loads
-from sys import exit
+from json import loads
 
 import mysql.connector
 from TwitterAPI import TwitterAPI
 
 from keys import API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET
-from keys import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
 from keys import DATABASE, SERVER, USERNAME, PASSWORD
 
 api = TwitterAPI(API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET)
