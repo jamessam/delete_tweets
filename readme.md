@@ -1,2 +1,5 @@
 # About
-A python script I used to clear out tweets I'd marked as favorites after a certain date.
+Some python scripts I used to clear out tweets from my account.
+* favorites.py removes most likes before a certain date/tweet.
+* notifications.py stores all notifications I've received in a MySQL DB table.
+* timeline.py is preliminary work.
