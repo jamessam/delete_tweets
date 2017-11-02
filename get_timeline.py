@@ -7,7 +7,7 @@ from keys import DATABASE, SERVER, USERNAME, PASSWORD
 
 api = TwitterAPI(API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET)
 
-max_id = 892123542053044224
+max_id = 569238353364717569
 
 def get_tweets():
     r = api.request('statuses/user_timeline',
