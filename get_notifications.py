@@ -8,12 +8,12 @@ from keys import API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET
 from keys import DATABASE, SERVER, USERNAME, PASSWORD
 
 api = TwitterAPI(API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET)
-max_id = 920670442926481409
+max_id = 755835471675072512
 
 def insert_tweet(c, tweet):
     created = datetime.strptime(tweet['created_at'], "%a %b %d %H:%M:%S %z %Y")
     query = '''
-        INSERT INTO notifications (id, created, favorite_count, favorited,
+        INSERT IGNORE INTO notifications (id, created, favorite_count, favorited,
             in_reply_to_screen_name, in_reply_to_status_id, in_reply_to_user_id,
             is_quote_status, lang, retweet_count, retweeted, source_app,
             tweet_text, truncated, tweeter_id)
