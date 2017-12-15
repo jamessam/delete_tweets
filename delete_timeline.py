@@ -31,9 +31,3 @@ connection.commit()
 c.close()
 connection.close()
 connection.disconnect()
-
-
-
-#  r = api.request('statuses/update', { 'status': 'test' })
-# r = api.request('favorites/destroy', { 'screen_name': 'jamessamsf', 'id': 923079678738309120 })
-# r = api.request('statuses/destroy/:id', { 'id_str': '923079678738309120' })
