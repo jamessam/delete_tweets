@@ -1,61 +1,89 @@
 from datetime import datetime
 from json import loads
-import mysql.connector
 from TwitterAPI import TwitterAPI
-from keys import API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET
-from keys import DATABASE, SERVER, USERNAME, PASSWORD
+from keys import API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET, database, twitter_user
+import sqlite3
+import sys
+import argparse
 
-api = TwitterAPI(API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET)
+class timeline:
 
-max_id = 569238353364717569
+    def __init__(self):
+        self.api = TwitterAPI(API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET)
 
-def get_tweets():
-    r = api.request('statuses/user_timeline',
-        { 'screen_name': 'jamessamsf', 'count': 200, 'max_id': max_id })
-    data = loads(r.text)
-    if len(data) < 2:
-        yield 'The end'
-    for datum in data:
-        yield datum
+        # Connect to database
+        self.db = sqlite3.connect(database)
+        self.c = self.db.cursor()
 
-def insert_tweet(c, tweet):
-    created = datetime.strptime(tweet['created_at'], "%a %b %d %H:%M:%S %z %Y")
-    query = '''
-        INSERT IGNORE INTO statuses (id, created, favorite_count, favorited,
-            in_reply_to_screen_name, in_reply_to_status_id, in_reply_to_user_id,
-            is_quote_status, lang, retweet_count, retweeted, source_app,
-            tweet_text, truncated, tweeter_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'''
-    c.execute(query, (tweet['id'], str(created), tweet['favorite_count'],
-        tweet['favorited'], tweet['in_reply_to_screen_name'],
-        tweet['in_reply_to_status_id'], tweet['in_reply_to_user_id'],
-        tweet['is_quote_status'], tweet['lang'], tweet['retweet_count'],
-        tweet['retweeted'], tweet['source'], tweet['text'],
-        tweet['truncated'], tweet['user']['id'] ))
+        # create table if it doesn't exist
+        self.c.execute('''CREATE TABLE IF NOT EXISTS 
+            statuses(id INT UNIQUE, 
+            created TEXT, 
+            favorite_count INT,
+            favorited TEXT,
+            in_reply_to_screen_name TEXT,
+            in_reply_to_status_id INT,
+            in_reply_to_user_id INT,
+            is_quote_status TEXT,
+            lang TEXT,
+            retweet_count INT,
+            retweeted TEXT,
+            source_app TEXT,
+            tweet_text TEXT,
+            truncated TEXT,
+            tweeter_id INT)''')
 
-tweets = get_tweets()
+    def get_tweets(self, max_id,count=200):
+        r = self.api.request('statuses/user_timeline',
+            { 'screen_name': twitter_user, 'count': count, 'max_id': max_id })
+        data = loads(r.text)
+        if len(data) < 2:
+            yield 'The end'
+        for datum in data:
+            yield datum
 
-good_tweets = []
+    def insert_tweet(self, tweet):
+        created = datetime.strptime(tweet['created_at'], "%a %b %d %H:%M:%S %z %Y")
+        query = '''
+            INSERT OR IGNORE INTO statuses (id, created, favorite_count, favorited,
+                in_reply_to_screen_name, in_reply_to_status_id, in_reply_to_user_id,
+                is_quote_status, lang, retweet_count, retweeted, source_app,
+                tweet_text, truncated, tweeter_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''
+        self.c.execute(query, (tweet['id'], str(created), tweet['favorite_count'],
+            tweet['favorited'], tweet['in_reply_to_screen_name'],
+            tweet['in_reply_to_status_id'], tweet['in_reply_to_user_id'],
+            tweet['is_quote_status'], tweet['lang'], tweet['retweet_count'],
+            tweet['retweeted'], tweet['source'], tweet['text'],
+            tweet['truncated'], tweet['user']['id'] ))
 
-# Connect to database
-connection = mysql.connector.connect(database=DATABASE, host=SERVER, port=3306, user=USERNAME, password=PASSWORD)
-c = connection.cursor()
+if __name__ == "__main__":
 
-while(True):
-    try:
-        tweet = next(tweets)
-        if tweet == 'The end':
-            break
-        print(tweet['id'])
-        insert_tweet(c, tweet)
-        max_id = tweet['id']
-    except StopIteration:
-        connection.commit()
-        tweets = get_tweets()
-    except TypeError as e:
-        print(e)
+    parser = argparse.ArgumentParser(description='''Get tweets from your timeline 
+        and insert them into a sqlite database''')
+    parser.add_argument("max_id",
+        help="maximum tweet ID to pull from. Pull tweets prior to this id.")
+    parser.add_argument("-n", help="number of tweets to pull per request")
+    args = parser.parse_args()
 
-connection.commit()
-c.close()
-connection.close()
-connection.disconnect()
+
+    timeline = timeline()
+    tweets = timeline.get_tweets(args.max_id)
+
+    good_tweets = []
+
+    while(True):
+        try:
+            tweet = next(tweets)
+            if tweet == 'The end':
+                sys.exit()
+            print(tweet['id'])
+            timeline.insert_tweet(tweet)
+            max_id = tweet['id']
+        except StopIteration:
+            timeline.db.commit()
+            tweets = timeline.get_tweets(max_id)
+        except TypeError as e:
+            sys.exit(e)
+
+    timeline.db.commit()
