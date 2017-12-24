@@ -25,3 +25,9 @@ The API key and secret and the access token and secret are retrieved from https:
 `python3 get_timeline.py tweet_id`
 
 *tweet_id* is the latest tweet you want to retrieve.
+
+## notifications
+
+`python3 get_notifications.py tweet_id`
+
+*tweet_id* is the latest tweet you want to retrieve.
