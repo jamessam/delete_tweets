@@ -1,9 +1,10 @@
 from datetime import datetime
 from json import loads
-import sqlite3
-import sys
 from TwitterAPI import TwitterAPI
 from keys import API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET, database, twitter_user
+import sqlite3
+import sys
+import argparse
 
 class timeline:
 
@@ -32,9 +33,9 @@ class timeline:
             truncated TEXT,
             tweeter_id INT)''')
 
-    def get_tweets(self,max_id):
+    def get_tweets(self,max_id,count=200):
         r = self.api.request('statuses/user_timeline',
-            { 'screen_name': twitter_user, 'count': 200, 'max_id': max_id })
+            { 'screen_name': twitter_user, 'count': count, 'max_id': max_id })
         data = loads(r.text)
         if len(data) < 2:
             yield 'The end'
@@ -58,8 +59,16 @@ class timeline:
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser(description='''Get tweets from your timeline 
+        and insert them into a sqlite database''')
+    parser.add_argument("max_id",
+        help="maximum tweet ID to pull from. Pull tweets prior to this id.")
+    parser.add_argument("-n", help="number of tweets to pull")
+    args = parser.parse_args()
+
+
     timeline = timeline()
-    tweets = timeline.get_tweets(944394605407162368)
+    tweets = timeline.get_tweets(args.max_id)
 
     good_tweets = []
 
