@@ -17,7 +17,7 @@ class timeline:
 
         # create table if it doesn't exist
         self.c.execute('''CREATE TABLE IF NOT EXISTS 
-            statuses(id INT, 
+            statuses(id INT UNIQUE, 
             created TEXT, 
             favorite_count INT,
             favorited TEXT,
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         and insert them into a sqlite database''')
     parser.add_argument("max_id",
         help="maximum tweet ID to pull from. Pull tweets prior to this id.")
-    parser.add_argument("-n", help="number of tweets to pull")
+    parser.add_argument("-n", help="number of tweets to pull per request")
     args = parser.parse_args()
 
 
