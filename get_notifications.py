@@ -16,7 +16,7 @@ class notifications:
         self.db = sqlite3.connect(database)
         self.c = self.db.cursor()
 
-        # Create table if it doesn't exist
+        # Create table for notifications if it doesn't exist
         self.c.execute('''CREATE TABLE IF NOT EXISTS notifications(id INT UNIQUE,
             created TEXT,
             favorite_count INT,
@@ -33,6 +33,10 @@ class notifications:
             truncated TEXT,
             tweeter_id INT)''')
 
+        self.c.execute('''CREATE TABLE IF NOT EXISTS accounts(id INT UNIQUE,
+            screen_name TEXT,
+            name TEXT)''')
+
     def insert_tweet(self, tweet):
         created = datetime.strptime(tweet['created_at'], "%a %b %d %H:%M:%S %z %Y")
         query = '''
@@ -47,6 +51,13 @@ class notifications:
             tweet['is_quote_status'], tweet['lang'], tweet['retweet_count'],
             tweet['retweeted'], tweet['source'], tweet['text'],
             tweet['truncated'], tweet['user']['id'] ))
+
+        # insert users
+        r = self.api.request('users/show', { 'id': tweet['user']['id'] })
+        account = loads(r.text)
+        query = 'INSERT OR IGNORE INTO accounts (id, screen_name, name) VALUES (?, ?, ?)'
+        self.c.execute(query, (account['id'], account['screen_name'], account['name']))
+
         self.db.commit()
 
     def get_tweets(self, max_id):
