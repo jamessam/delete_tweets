@@ -33,7 +33,7 @@ class timeline:
             truncated TEXT,
             tweeter_id INT)''')
 
-    def get_tweets(self,max_id,count=200):
+    def get_tweets(self, max_id,count=200):
         r = self.api.request('statuses/user_timeline',
             { 'screen_name': twitter_user, 'count': count, 'max_id': max_id })
         data = loads(r.text)
@@ -84,6 +84,6 @@ if __name__ == "__main__":
             timeline.db.commit()
             tweets = timeline.get_tweets(max_id)
         except TypeError as e:
-            print(e)
+            sys.exit(e)
 
     timeline.db.commit()
