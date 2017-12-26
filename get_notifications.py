@@ -1,13 +1,12 @@
 from datetime import datetime
 from json import loads
 
-import mysql.connector
 from TwitterAPI import TwitterAPI
 
+from connection import MySQLConnector
 from keys import API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET
 from keys import DATABASE, SERVER, USERNAME, PASSWORD
 
-api = TwitterAPI(API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET)
 max_id = 755835471675072512
 
 def insert_tweet(c, tweet):
@@ -34,30 +33,34 @@ def get_tweets():
         for tweet in tweets:
             yield tweet
 
-tweets = get_tweets()
+def main():
+    tweets = get_tweets()
 
-# Connect to database
-connection = mysql.connector.connect(database=DATABASE, host=SERVER, port=3306, user=USERNAME, password=PASSWORD)
-c = connection.cursor()
+    with MySQLConnector(user=USERNAME, password=argv[1], database=DATABASE,
+        host=SERVER) as connection:
+        c = connection.cursor()
 
-while(True):
-    try:
-        tweet = next(tweets)
-        if tweet == 'The end':
-            break
-        if tweet['id'] == max_id:
-            continue
-        else:
-            print(tweet['id'])
-            insert_tweet(c, tweet)
-        max_id = tweet['id']
-    except StopIteration:
-        tweets = get_tweets()
-    except TypeError as e:
-        print(e)
-        break
+        while(True):
+            try:
+                tweet = next(tweets)
+                if tweet == 'The end':
+                    break
+                if tweet['id'] == max_id:
+                    continue
+                else:
+                    print(tweet['id'])
+                    insert_tweet(c, tweet)
+                max_id = tweet['id']
+            except StopIteration:
+                tweets = get_tweets()
+            except TypeError as e:
+                print(e)
+                break
 
-connection.commit()
-c.close()
-connection.close()
-connection.disconnect()
+        connection.commit()
+        c.close()
+
+
+if __name__ == '__main__':
+    api = TwitterAPI(API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET)
+    main()
