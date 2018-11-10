@@ -14,7 +14,6 @@ ACCESS_TOKEN=os.environ['ACCESS_TOKEN']
 ACCESS_TOKEN_SECRET=os.environ['ACCESS_TOKEN_SECRET']
 
 DYNAMO_CLIENT = boto3.client('dynamodb')
-DYNAMO_TABLE = os.environ['DYNAMO_TABLE']
 TWITTER_API = TwitterAPI(API_KEY, API_SECRET_KEY, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
 
@@ -36,7 +35,7 @@ def get_tweets(max_id):
 def insert_tweet(tweet):
     print(f"Saving {tweet['id']} to DynamoDB.")
     DYNAMO_CLIENT.put_item(
-        TableName=DYNAMO_TABLE,
+        TableName=os.environ['DYNAMO_TABLE_ID'],
         Item={
             'ID': {
                 'N': str(tweet['id'])
