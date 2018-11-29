@@ -1,4 +1,5 @@
 import os
+from sys import argv
 
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
@@ -16,30 +17,20 @@ TWITTER_API = TwitterAPI(API_KEY, API_SECRET_KEY, ACCESS_TOKEN, ACCESS_TOKEN_SEC
 
 
 def main():
-    tweets = get_tweets(int(os.environ['MIN_TWEET_ID']), int(os.environ['MAX_TWEET_ID']))
-    for tweet in tweets:
-        if tweet['ReplyCount'] > 0 or tweet['FavoriteCount'] > 0 or tweet['RetweetCount'] > 0:
-            continue
-        update_deleted_status(tweet)
-        delete_tweet(tweet)
+    tweet_id = int(argv[1])
+    update_deleted_status(tweet_id)
+    delete_tweet(tweet_id)
 
 
-def get_tweets(min_id, max_id):
-    fe = Key('ID').gte(min_id)
-    response = DYNAMO_TABLE.scan(FilterExpression=fe)
-    return response['Items']
-
-
-def update_deleted_status(tweet):
+def update_deleted_status(tweet_id):
     DYNAMO_TABLE.update_item(
-        Key = { 'ID': tweet['ID'] },
+        Key = { 'ID': tweet_id },
         UpdateExpression='SET Deleted = :value',
         ExpressionAttributeValues={ ':value': True }
     )
 
 
-def delete_tweet(tweet):
-    tweet_id = tweet['ID']
+def delete_tweet(tweet_id):
     r = TWITTER_API.request(f'statuses/destroy/:{tweet_id}')
     if r.status_code == 200:
         print(f'Successfully deleted {tweet_id}')
