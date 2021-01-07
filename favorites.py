@@ -41,4 +41,3 @@ while(True):
     except StopIteration:
         favorites = favorite_tweets()
 
-print(delete_after)
